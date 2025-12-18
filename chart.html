@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angle Data Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        
+        .upload-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        
+        button {
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        #chartContainer {
+            margin-top: 30px;
+            height: 500px;
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        #peakTable {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .peak-max {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        
+        .peak-min {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        
+        .filter-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .filter-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .filter-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .filter-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .filter-option label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .filter-option.angle-x label {
+            color: rgb(255, 99, 132);
+        }
+        
+        .filter-option.angle-y label {
+            color: rgb(54, 162, 235);
+        }
+        
+        .filter-option.angle-z label {
+            color: rgb(75, 192, 192);
+        }
+        
+        .zeroing-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .zeroing-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .zeroing-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .zeroing-controls label {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .zeroing-controls input[type="number"] {
+            width: 80px;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .zeroing-controls button {
+            padding: 8px 16px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .zeroing-controls button:hover {
+            background-color: #1976D2;
+        }
+        
+        .zeroing-controls button.reset-btn {
+            background-color: #ff9800;
+        }
+        
+        .zeroing-controls button.reset-btn:hover {
+            background-color: #f57c00;
+        }
+        
+        .zeroing-status {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .zeroing-status.active {
+            color: #2196F3;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Angle Data Visualization</h1>
+
+        <div class="upload-section">
+            <h3>Upload Data File or Paste Text</h3>
+            <input type="file" id="fileInput" accept=".txt">
+            <p style="color: #666; font-size: 14px;">Select a tab-separated text file (e.g., 20251204202257.txt)</p>
+            <p style="margin: 20px 0 10px 0;"><strong>OR</strong></p>
+            <textarea id="textInput" placeholder="Paste your tab-separated data here..." style="width: 100%; height: 150px; padding: 10px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+            <button id="parseButton" style="margin-top: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Parse and Draw Chart</button>
+        </div>
+
+        <div class="info" id="info" style="display: none;">
+            <strong>File loaded:</strong> <span id="fileName"></span><br>
+            <strong>Data points:</strong> <span id="dataPoints"></span>
+        </div>
+
+        <div class="filter-section" id="filterSection">
+            <h3>Filter Angles:</h3>
+            <div class="filter-options">
+                <div class="filter-option angle-x">
+                    <input type="checkbox" id="filterX" checked>
+                    <label for="filterX">角度X(°)</label>
+                </div>
+                <div class="filter-option angle-y">
+                    <input type="checkbox" id="filterY" checked>
+                    <label for="filterY">角度Y(°)</label>
+                </div>
+                <div class="filter-option angle-z">
+                    <input type="checkbox" id="filterZ" checked>
+                    <label for="filterZ">角度Z(°)</label>
+                </div>
+            </div>
+
+            <div class="zeroing-section">
+                <h3>Zeroing (Reference Calibration):</h3>
+                <div class="zeroing-controls">
+                    <label for="zeroingSamples">Initial samples for reference:</label>
+                    <input type="number" id="zeroingSamples" value="10" min="1" max="1000">
+                    <button id="applyZeroing">Apply Zeroing</button>
+                    <button id="resetZeroing" class="reset-btn">Reset to Original</button>
+                </div>
+                <div class="zeroing-status" id="zeroingStatus"></div>
+            </div>
+        </div>
+
+        <div id="chartContainer">
+            <canvas id="angleChart"></canvas>
+        </div>
+
+        <div id="peakTable">
+            <h2>Peak Points Analysis</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Measurement</th>
+                        <th>Type</th>
+                        <th>Value (°)</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="peakTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let originalData = null; // Store original data for reset
+        let isZeroed = false;
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    parseAndDrawChart(content, file.name);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        document.getElementById('parseButton').addEventListener('click', function() {
+            const textContent = document.getElementById('textInput').value.trim();
+            if (textContent) {
+                parseAndDrawChart(textContent, 'Pasted Data');
+            } else {
+                alert('Please paste some data first.');
+            }
+        });
+
+        function parseAndDrawChart(content, fileName) {
+            const lines = content.split('\n');
+            const headers = lines[0].split('\t');
+
+            // Find column indices
+            const timeIndex = headers.indexOf('时间');
+            const angleXIndex = headers.indexOf('角度X(°)');
+            const angleYIndex = headers.indexOf('角度Y(°)');
+            const angleZIndex = headers.indexOf('角度Z(°)');
+
+            if (timeIndex === -1 || angleXIndex === -1 || angleYIndex === -1 || angleZIndex === -1) {
+                alert('Error: Required columns not found in the file.');
+                return;
+            }
+
+            const timeData = [];
+            const angleXData = [];
+            const angleYData = [];
+            const angleZData = [];
+
+            // Parse data rows
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+
+                const values = lines[i].split('\t');
+                if (values.length > Math.max(timeIndex, angleXIndex, angleYIndex, angleZIndex)) {
+                    const time = values[timeIndex];
+                    const angleX = parseFloat(values[angleXIndex]);
+                    const angleY = parseFloat(values[angleYIndex]);
+                    const angleZ = parseFloat(values[angleZIndex]);
+
+                    if (time && !isNaN(angleX) && !isNaN(angleY) && !isNaN(angleZ)) {
+                        // Format time to show only seconds and milliseconds for better readability
+                        const timeParts = time.split(' ');
+                        const timeLabel = timeParts.length > 1 ? timeParts[1] : time;
+
+                        timeData.push(timeLabel);
+                        angleXData.push(angleX);
+                        angleYData.push(angleY);
+                        angleZData.push(angleZ);
+                    }
+                }
+            }
+
+            // Store original data for zeroing reset
+            originalData = {
+                timeData: [...timeData],
+                angleXData: [...angleXData],
+                angleYData: [...angleYData],
+                angleZData: [...angleZData],
+                fileName: fileName
+            };
+            isZeroed = false;
+            document.getElementById('zeroingStatus').textContent = '';
+            document.getElementById('zeroingStatus').className = 'zeroing-status';
+
+            // Update info
+            document.getElementById('fileName').textContent = fileName;
+            document.getElementById('dataPoints').textContent = timeData.length;
+            document.getElementById('info').style.display = 'block';
+            document.getElementById('filterSection').style.display = 'block';
+
+            // Find and display peak points
+            displayPeakPoints(timeData, angleXData, angleYData, angleZData);
+
+            // Destroy existing chart if any
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Create chart
+            const ctx = document.getElementById('angleChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeData,
+                    datasets: [{
+                        label: '角度X(°)',
+                        data: angleXData,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 1,
+                        tension: 0.1
+                    }, {
+                        label: '角度Y(°)',
+                        data: angleYData,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 1,
+                        tension: 0.1
+                    }, {
+                        label: '角度Z(°)',
+                        data: angleZData,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 1,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Angle Measurements Over Time',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '时间 (Time)',
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '角度 (Degrees)',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        function displayPeakPoints(timeData, angleXData, angleYData, angleZData) {
+            const peakTableBody = document.getElementById('peakTableBody');
+            peakTableBody.innerHTML = '';
+
+            // Function to find local peaks (maxima and minima)
+            function findPeaks(data, timeData, threshold = 5) {
+                const peaks = [];
+
+                for (let i = 1; i < data.length - 1; i++) {
+                    const prev = data[i - 1];
+                    const current = data[i];
+                    const next = data[i + 1];
+
+                    // Local maximum
+                    if (current > prev && current > next && Math.abs(current - prev) > threshold) {
+                        peaks.push({
+                            index: i,
+                            value: current,
+                            type: 'max',
+                            time: timeData[i]
+                        });
+                    }
+                    // Local minimum
+                    else if (current < prev && current < next && Math.abs(current - prev) > threshold) {
+                        peaks.push({
+                            index: i,
+                            value: current,
+                            type: 'min',
+                            time: timeData[i]
+                        });
+                    }
+                }
+
+                return peaks;
+            }
+
+            // Find peaks for each angle
+            const peaksX = findPeaks(angleXData, timeData);
+            const peaksY = findPeaks(angleYData, timeData);
+            const peaksZ = findPeaks(angleZData, timeData);
+
+            // Add global max and min for each angle
+            const globalPeaks = [{
+                measurement: '角度X(°)',
+                type: 'Global Max',
+                value: Math.max(...angleXData),
+                time: timeData[angleXData.indexOf(Math.max(...angleXData))],
+                cssClass: 'peak-max'
+            }, {
+                measurement: '角度X(°)',
+                type: 'Global Min',
+                value: Math.min(...angleXData),
+                time: timeData[angleXData.indexOf(Math.min(...angleXData))],
+                cssClass: 'peak-min'
+            }, {
+                measurement: '角度Y(°)',
+                type: 'Global Max',
+                value: Math.max(...angleYData),
+                time: timeData[angleYData.indexOf(Math.max(...angleYData))],
+                cssClass: 'peak-max'
+            }, {
+                measurement: '角度Y(°)',
+                type: 'Global Min',
+                value: Math.min(...angleYData),
+                time: timeData[angleYData.indexOf(Math.min(...angleYData))],
+                cssClass: 'peak-min'
+            }, {
+                measurement: '角度Z(°)',
+                type: 'Global Max',
+                value: Math.max(...angleZData),
+                time: timeData[angleZData.indexOf(Math.max(...angleZData))],
+                cssClass: 'peak-max'
+            }, {
+                measurement: '角度Z(°)',
+                type: 'Global Min',
+                value: Math.min(...angleZData),
+                time: timeData[angleZData.indexOf(Math.min(...angleZData))],
+                cssClass: 'peak-min'
+            }];
+
+            // Add local peaks
+            const allPeaks = [...globalPeaks];
+
+            peaksX.forEach(peak => {
+                allPeaks.push({
+                    measurement: '角度X(°)',
+                    type: peak.type === 'max' ? 'Local Max' : 'Local Min',
+                    value: peak.value,
+                    time: peak.time,
+                    cssClass: peak.type === 'max' ? 'peak-max' : 'peak-min'
+                });
+            });
+
+            peaksY.forEach(peak => {
+                allPeaks.push({
+                    measurement: '角度Y(°)',
+                    type: peak.type === 'max' ? 'Local Max' : 'Local Min',
+                    value: peak.value,
+                    time: peak.time,
+                    cssClass: peak.type === 'max' ? 'peak-max' : 'peak-min'
+                });
+            });
+
+            peaksZ.forEach(peak => {
+                allPeaks.push({
+                    measurement: '角度Z(°)',
+                    type: peak.type === 'max' ? 'Local Max' : 'Local Min',
+                    value: peak.value,
+                    time: peak.time,
+                    cssClass: peak.type === 'max' ? 'peak-max' : 'peak-min'
+                });
+            });
+
+            // Sort peaks by measurement and type
+            allPeaks.sort((a, b) => {
+                if (a.measurement !== b.measurement) {
+                    return a.measurement.localeCompare(b.measurement);
+                }
+                return a.type.localeCompare(b.type);
+            });
+
+            // Populate table
+            allPeaks.forEach(peak => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${peak.measurement}</td>
+                    <td>${peak.type}</td>
+                    <td class="${peak.cssClass}">${peak.value.toFixed(2)}</td>
+                    <td>${peak.time}</td>
+                `;
+                peakTableBody.appendChild(row);
+            });
+
+            document.getElementById('peakTable').style.display = 'block';
+        }
+
+        // Filter checkbox event listeners
+        document.getElementById('filterX').addEventListener('change', updateVisibility);
+        document.getElementById('filterY').addEventListener('change', updateVisibility);
+        document.getElementById('filterZ').addEventListener('change', updateVisibility);
+
+        // Zeroing event listeners
+        document.getElementById('applyZeroing').addEventListener('click', applyZeroing);
+        document.getElementById('resetZeroing').addEventListener('click', resetZeroing);
+
+        function applyZeroing() {
+            if (!originalData) {
+                alert('Please load data first.');
+                return;
+            }
+
+            const numSamples = parseInt(document.getElementById('zeroingSamples').value);
+            if (isNaN(numSamples) || numSamples < 1) {
+                alert('Please enter a valid number of samples (minimum 1).');
+                return;
+            }
+
+            if (numSamples > originalData.timeData.length) {
+                alert(`Number of samples exceeds data points. Maximum is ${originalData.timeData.length}.`);
+                return;
+            }
+
+            // Calculate reference values (average of initial samples)
+            const refX = originalData.angleXData.slice(0, numSamples).reduce((a, b) => a + b, 0) / numSamples;
+            const refY = originalData.angleYData.slice(0, numSamples).reduce((a, b) => a + b, 0) / numSamples;
+            const refZ = originalData.angleZData.slice(0, numSamples).reduce((a, b) => a + b, 0) / numSamples;
+
+            // Apply zeroing (subtract reference from all data points)
+            const zeroedXData = originalData.angleXData.map(v => v - refX);
+            const zeroedYData = originalData.angleYData.map(v => v - refY);
+            const zeroedZData = originalData.angleZData.map(v => v - refZ);
+
+            // Update chart
+            if (chart) {
+                chart.data.datasets[0].data = zeroedXData;
+                chart.data.datasets[1].data = zeroedYData;
+                chart.data.datasets[2].data = zeroedZData;
+                chart.update();
+            }
+
+            // Update peak table with zeroed data
+            displayPeakPoints(originalData.timeData, zeroedXData, zeroedYData, zeroedZData);
+            updateVisibility(); // Reapply filters
+
+            isZeroed = true;
+            const statusEl = document.getElementById('zeroingStatus');
+            statusEl.textContent = `Zeroed using first ${numSamples} samples. Reference: X=${refX.toFixed(2)}°, Y=${refY.toFixed(2)}°, Z=${refZ.toFixed(2)}°`;
+            statusEl.className = 'zeroing-status active';
+        }
+
+        function resetZeroing() {
+            if (!originalData) {
+                alert('No data to reset.');
+                return;
+            }
+
+            // Restore original data
+            if (chart) {
+                chart.data.datasets[0].data = [...originalData.angleXData];
+                chart.data.datasets[1].data = [...originalData.angleYData];
+                chart.data.datasets[2].data = [...originalData.angleZData];
+                chart.update();
+            }
+
+            // Update peak table with original data
+            displayPeakPoints(originalData.timeData, originalData.angleXData, originalData.angleYData, originalData.angleZData);
+            updateVisibility(); // Reapply filters
+
+            isZeroed = false;
+            const statusEl = document.getElementById('zeroingStatus');
+            statusEl.textContent = 'Reset to original data.';
+            statusEl.className = 'zeroing-status';
+        }
+
+        function updateVisibility() {
+            const showX = document.getElementById('filterX').checked;
+            const showY = document.getElementById('filterY').checked;
+            const showZ = document.getElementById('filterZ').checked;
+
+            // Update chart visibility
+            if (chart) {
+                chart.data.datasets[0].hidden = !showX;
+                chart.data.datasets[1].hidden = !showY;
+                chart.data.datasets[2].hidden = !showZ;
+                chart.update();
+            }
+
+            // Update table visibility
+            const tableRows = document.querySelectorAll('#peakTableBody tr');
+            tableRows.forEach(row => {
+                const measurement = row.cells[0].textContent;
+                if (measurement.includes('X')) {
+                    row.style.display = showX ? '' : 'none';
+                } else if (measurement.includes('Y')) {
+                    row.style.display = showY ? '' : 'none';
+                } else if (measurement.includes('Z')) {
+                    row.style.display = showZ ? '' : 'none';
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
