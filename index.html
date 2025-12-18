@@ -6,7 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Angle Data Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: Arial, sans-serif;
             max-width: 1200px;
@@ -50,6 +56,8 @@
         #chartContainer {
             margin-top: 30px;
             height: 500px;
+            min-height: 300px;
+            touch-action: pan-y pinch-zoom;
         }
         
         .info {
@@ -63,12 +71,15 @@
         #peakTable {
             margin-top: 30px;
             display: none;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            min-width: 400px;
         }
         
         th,
@@ -76,6 +87,7 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+            white-space: nowrap;
         }
         
         th {
@@ -126,9 +138,10 @@
         }
         
         .filter-option input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
+            -webkit-appearance: checkbox;
         }
         
         .filter-option label {
@@ -174,20 +187,21 @@
         
         .zeroing-controls input[type="number"] {
             width: 80px;
-            padding: 6px 10px;
+            padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 16px;
         }
         
         .zeroing-controls button {
-            padding: 8px 16px;
+            padding: 12px 16px;
             background-color: #2196F3;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
+            min-height: 44px;
         }
         
         .zeroing-controls button:hover {
@@ -213,6 +227,205 @@
             color: #2196F3;
             font-weight: 500;
         }
+        
+        .zoom-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .zoom-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .zoom-controls button {
+            padding: 12px 16px;
+            background-color: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            min-height: 44px;
+        }
+        
+        .zoom-controls button:hover {
+            background-color: #7b1fa2;
+        }
+        
+        .zoom-controls button.pan-btn {
+            background-color: #673ab7;
+            min-width: 50px;
+        }
+        
+        .zoom-controls button.pan-btn:hover {
+            background-color: #512da8;
+        }
+        
+        .zoom-controls .btn-group {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .zoom-hint {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .upload-section {
+                padding: 15px;
+            }
+            
+            .upload-section h3 {
+                font-size: 16px;
+            }
+            
+            #chartContainer {
+                height: 350px;
+            }
+            
+            .filter-options {
+                gap: 15px;
+            }
+            
+            .filter-option {
+                flex: 1 1 auto;
+                min-width: 100px;
+            }
+            
+            .zeroing-controls {
+                gap: 10px;
+            }
+            
+            .zeroing-controls label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .zeroing-controls input[type="number"] {
+                flex: 1;
+                min-width: 60px;
+            }
+            
+            .zeroing-controls button {
+                flex: 1;
+                min-width: 100px;
+            }
+            
+            .zoom-controls {
+                gap: 8px;
+            }
+            
+            .zoom-controls button {
+                padding: 10px 12px;
+                font-size: 13px;
+                flex: 1;
+                min-width: 70px;
+            }
+            
+            .zoom-controls .btn-group {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .zoom-controls .btn-group button {
+                flex: 1;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+                font-size: 13px;
+            }
+            
+            .zoom-hint {
+                font-size: 12px;
+            }
+            
+            .zeroing-status,
+            .info {
+                font-size: 13px;
+            }
+        }
+        
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 10px;
+                border-radius: 4px;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+            
+            #chartContainer {
+                height: 280px;
+                margin-top: 20px;
+            }
+            
+            .upload-section textarea {
+                height: 100px !important;
+                font-size: 11px !important;
+            }
+            
+            .filter-section {
+                padding: 12px;
+            }
+            
+            .filter-section h3,
+            .zeroing-section h3,
+            .zoom-section h3 {
+                font-size: 13px;
+            }
+            
+            .filter-option label {
+                font-size: 14px;
+            }
+            
+            .zeroing-controls button,
+            .zoom-controls button {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+                font-size: 12px;
+            }
+            
+            #peakTable h2 {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 
@@ -225,8 +438,8 @@
             <input type="file" id="fileInput" accept=".txt">
             <p style="color: #666; font-size: 14px;">Select a tab-separated text file (e.g., 20251204202257.txt)</p>
             <p style="margin: 20px 0 10px 0;"><strong>OR</strong></p>
-            <textarea id="textInput" placeholder="Paste your tab-separated data here..." style="width: 100%; height: 150px; padding: 10px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
-            <button id="parseButton" style="margin-top: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Parse and Draw Chart</button>
+            <textarea id="textInput" placeholder="Paste your tab-separated data here..." style="width: 100%; height: 150px; padding: 10px; font-family: monospace; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"></textarea>
+            <button id="parseButton" style="margin-top: 10px; padding: 12px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; max-width: 300px;">Parse and Draw Chart</button>
         </div>
 
         <div class="info" id="info" style="display: none;">
@@ -260,6 +473,20 @@
                     <button id="resetZeroing" class="reset-btn">Reset to Original</button>
                 </div>
                 <div class="zeroing-status" id="zeroingStatus"></div>
+            </div>
+
+            <div class="zoom-section">
+                <h3>Chart Zoom & Pan:</h3>
+                <div class="zoom-controls">
+                    <div class="btn-group">
+                        <button id="panLeft" class="pan-btn">◀ Left</button>
+                        <button id="panRight" class="pan-btn">Right ▶</button>
+                    </div>
+                    <button id="zoomIn">Zoom In +</button>
+                    <button id="zoomOut">Zoom Out −</button>
+                    <button id="resetZoom">Reset Zoom</button>
+                </div>
+                <div class="zoom-hint">💡 Use buttons or: Scroll to zoom | Drag to pan | Pinch on touch devices</div>
             </div>
         </div>
 
@@ -464,6 +691,31 @@
                         mode: 'nearest',
                         axis: 'x',
                         intersect: false
+                    },
+                    plugins: {
+                        zoom: {
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                    modifierKey: null,
+                                    speed: 0.1
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'x'
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'x',
+                                threshold: 10
+                            },
+                            limits: {
+                                x: {
+                                    minRange: 5
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -709,6 +961,73 @@
                 }
             });
         }
+
+        // Zoom and Pan controls
+        document.getElementById('resetZoom').addEventListener('click', function() {
+            if (chart) {
+                chart.resetZoom();
+            }
+        });
+        
+        document.getElementById('panLeft').addEventListener('click', function() {
+            if (chart) {
+                chart.pan({ x: 100 }, undefined, 'default');
+            }
+        });
+        
+        document.getElementById('panRight').addEventListener('click', function() {
+            if (chart) {
+                chart.pan({ x: -100 }, undefined, 'default');
+            }
+        });
+        
+        document.getElementById('zoomIn').addEventListener('click', function() {
+            if (chart) {
+                chart.zoom(1.2);
+            }
+        });
+        
+        document.getElementById('zoomOut').addEventListener('click', function() {
+            if (chart) {
+                chart.zoom(0.8);
+            }
+        });
+        
+        // Keyboard navigation for pan
+        document.addEventListener('keydown', function(e) {
+            if (!chart) return;
+            
+            // Only handle if not typing in input/textarea
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    chart.pan({ x: 50 }, undefined, 'default');
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    chart.pan({ x: -50 }, undefined, 'default');
+                    e.preventDefault();
+                    break;
+                case 'ArrowUp':
+                case '+':
+                case '=':
+                    chart.zoom(1.1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                case '-':
+                    chart.zoom(0.9);
+                    e.preventDefault();
+                    break;
+                case 'r':
+                case 'R':
+                case '0':
+                    chart.resetZoom();
+                    e.preventDefault();
+                    break;
+            }
+        });
     </script>
 </body>
 
